@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -41,7 +41,7 @@
 .read-the-docs {
   color: #888;
 }
-=======
+
 /* Custom scrollbar for webkit browsers */
 ::-webkit-scrollbar {
   width: 6px;
@@ -162,4 +162,4 @@ input:focus, textarea:focus {
     color: #f8fafc;
   }
 }
->>>>>>> 090360b (first frontend commit)
+
