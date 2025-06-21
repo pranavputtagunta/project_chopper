@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
@@ -33,3 +34,18 @@ function App() {
 }
 
 export default App
+=======
+import React from 'react';
+import HomeScreen from './pages/HomeScreen';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <HomeScreen />
+    </div>
+  );
+}
+
+export default App;
+>>>>>>> 090360b (first frontend commit)
