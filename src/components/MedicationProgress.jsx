@@ -298,6 +298,26 @@ const App = () => {
       setSaving(false);
     }
   };
+  const handleDeleteMedication = async (id) => {
+  // Optimistically update UI
+  const prevMedications = medications;
+  const updatedMedications = medications.filter(med => med.id !== id);
+  setMedications(updatedMedications);
+
+  try {
+    const res = await fetch('/api/medications', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to delete medication');
+  } catch (err) {
+    setError('Error deleting medication: ' + err.message);
+    // Optionally revert UI on error
+    setMedications(prevMedications);
+  }
+};
 
 const handleToggleMedication = async (id) => {
   // Optimistically update UI
