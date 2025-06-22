@@ -1,13 +1,10 @@
 {
-<<<<<<< HEAD
   "name": "project_chopper",
-=======
 
   "name": "project_chopper",
 
   "name": "my-react-app",
 
->>>>>>> 9e59f77 (another one)
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -15,25 +12,19 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-<<<<<<< HEAD
-=======
-
->>>>>>> 9e59f77 (another one)
     "preview": "vite preview",
     "setup": "npm install && pip install -r requirements.txt" 
   },
   "dependencies": {
-<<<<<<< HEAD
     "preview": "preview@vitepreview",
     "lucide-react": "^0.522.0",
-=======
 
     "preview": "vite preview"
   },
   "dependencies": {
     "lucide-react": "^0.522.0",
 
->>>>>>> 9e59f77 (another one)
+
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
@@ -42,27 +33,23 @@
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
-<<<<<<< HEAD
-    "autoprefixer": "^10.4.21",
-=======
-
 
     "autoprefixer": "^10.4.21",
 
->>>>>>> 9e59f77 (another one)
+    "autoprefixer": "^10.4.21",
+
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
-<<<<<<< HEAD
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.1",
-=======
 
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.1",
 
->>>>>>> 9e59f77 (another one)
+
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.1",
+
     "vite": "^6.3.5"
   }
 }
