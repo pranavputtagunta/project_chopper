@@ -266,7 +266,14 @@ export default async function handler(req, res) {
     // Load all medications
     const result = await loadMedicationsFromBlob();
     res.status(200).json(result);
-  } else {
+  } else if (req.method === 'PUT') {
+    // Add a single medication
+    const { medication } = req.body;
+    const { medications: existingMeds } = await loadMedicationsFromBlob();
+    const updatedMedications = [...existingMeds, medication];
+    const result = await saveMedicationsToBlob(updatedMedications);
+    res.status(200).json(result);
+    }else {
     res.status(405).end('Method Not Allowed');
   }
 }

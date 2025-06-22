@@ -206,44 +206,40 @@ const App = () => {
   }, []);
 
   const loadMedications = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const result = await mockBlobStorage.loadMedicationsFromBlob();
-      
-      if (result.success) {
-        setMedications(result.medications);
-      } else {
-        setError('Failed to load medications: ' + result.error);
-      }
-    } catch (err) {
-      setError('Error loading medications: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    setError(null);
 
-  const saveMedications = async (medicationsToSave) => {
-    try {
-      setSaving(true);
-      setError(null);
-      
-      const result = await mockBlobStorage.saveMedicationsToBlob(medicationsToSave);
-      
-      if (result.success) {
-        setLastSaved(new Date());
-        return true;
+    const res = await fetch('/api/medications');
+    const result = await res.json();
+
+    if (result.success) {
+      if (result.medications.length === 0) {
+        // Initialize with a default medication if empty
+        const defaultMed = {
+          id: Date.now(),
+          name: "Vitamin D3",
+          time: "08:00",
+          dosage: "1000 IU",
+          frequency: "Once daily",
+          notes: "Take with breakfast",
+          description: "Essential vitamin for bone health and immune function",
+          completed: false,
+          createdAt: new Date().toISOString()
+        };
+        setMedications([defaultMed]);
+        await saveMedications([defaultMed]);
       } else {
-        setError('Failed to save medications: ' + result.error);
-        return false;
+        setMedications(result.medications);
       }
-    } catch (err) {
-      setError('Error saving medications: ' + err.message);
-      return false;
-    } finally {
-      setSaving(false);
+    } else {
+      setError('Failed to load medications: ' + result.error);
     }
+  } catch (err) {
+    setError('Error loading medications: ' + err.message);
+  } finally {
+    setLoading(false);
+  }
   };
 
   const handleAddMedication = async () => {
