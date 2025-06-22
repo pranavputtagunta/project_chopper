@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -11,7 +11,7 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-=======
+
 // src/main.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -23,4 +23,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>,
 );
->>>>>>> 9e59f77 (another one)
+
