@@ -68,9 +68,9 @@ const HomeScreen = () => {
 
                 {/* Medication Section */}
                 <div className="flex-[1_1_360px] space-y-6">
-                  <div className="bg-white rounded-2xl shadow p-6">
+                  {/* <div className="bg-white rounded-2xl shadow p-6">
                     <MedicationProgress medications={medications} />
-                  </div>
+                  </div> */}
                   <div className="bg-white rounded-2xl shadow p-6">
                     <MedicationSchedule 
                       medications={medications}
