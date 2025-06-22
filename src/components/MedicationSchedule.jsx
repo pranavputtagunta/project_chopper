@@ -6,21 +6,48 @@ import {
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
-/*  Mock blob helpers – replace with your real API calls              */
+/*  Real API helpers – hit /api/medications                           */
 /* ------------------------------------------------------------------ */
-const mockBlobStorage = {
-  saveMedicationsToBlob: async meds => {
-    await new Promise(r => setTimeout(r, 800));
-    console.log('>>> SAVED to blob:', meds);
-    return { success: true };
+const api = {
+  /* GET all medications */
+  load: async () => {
+    const res = await fetch('/api/medications');
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'load failed');
+    return data.medications;
   },
-  loadMedicationsFromBlob: async () => {
-    await new Promise(r => setTimeout(r, 800));
-    return { success: true, medications: [] };
+
+  /* POST – replace whole list (bulk save) */
+  saveAll: async meds => {
+    const res = await fetch('/api/medications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ medications: meds })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'save failed');
   },
-  addMedicationToBlob: async med => {
-    await new Promise(r => setTimeout(r, 500));
-    return { success: true, medication: { ...med, id: Date.now() } };
+
+  /* PATCH one */
+  patchOne: async (id, updates) => {
+    const res = await fetch('/api/medications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, updates })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'patch failed');
+  },
+
+  /* DELETE one */
+  deleteOne: async id => {
+    const res = await fetch('/api/medications', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'delete failed');
   }
 };
 
@@ -30,7 +57,8 @@ const mockBlobStorage = {
 const MedicationTable = React.memo(({ medications, onToggle, onDelete }) => {
   const [expanded, setExpanded] = useState(new Set());
   const toggleRow = id => {
-    const s = new Set(expanded); s.has(id) ? s.delete(id) : s.add(id);
+    const s = new Set(expanded);
+    s.has(id) ? s.delete(id) : s.add(id);
     setExpanded(s);
   };
 
@@ -132,11 +160,11 @@ const MedicationTable = React.memo(({ medications, onToggle, onDelete }) => {
 /* ------------------------------------------------------------------ */
 const MedicationManager = () => {
   const [medications, setMedications] = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [saving, setSaving]         = useState(false);
-  const [error, setError]           = useState(null);
-  const [showForm, setShowForm]     = useState(false);
-  const [lastSaved, setLastSaved]   = useState(null);
+  const [loading,     setLoading]     = useState(true);
+  const [saving,      setSaving]      = useState(false);
+  const [error,       setError]       = useState(null);
+  const [showForm,    setShowForm]    = useState(false);
+  const [lastSaved,   setLastSaved]   = useState(null);
 
   const [formData, setFormData] = useState({
     name: '', time: '', dosage: '',
@@ -145,81 +173,27 @@ const MedicationManager = () => {
   });
   const frequencies = ['Once daily','Twice daily','Three times daily','As needed','Weekly'];
 
-  // helper that actually saves everything
-  const saveMedications = async meds => {
-    try {
-      setSaving(true);
-      const res = await mockBlobStorage.saveMedicationsToBlob(meds);
-      if (!res.success) throw new Error('Save failed');
-      setLastSaved(new Date());
-    } catch (e) {
-      setError('Error saving: ' + e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // load on mount
+  /* ------------------------ load on mount ------------------------ */
   useEffect(() => {
     (async () => {
       try {
-        const res = await mockBlobStorage.loadMedicationsFromBlob();
-        if (res.success) {
-          // if empty, seed one default
-          if (!res.medications.length) {
-            const d = {
-              id: Date.now(),
-              name: 'Vitamin D3',
-              time: '08:00',
-              dosage: '1000 IU',
-              frequency: 'Once daily',
-              notes: 'Take with breakfast',
-              description: 'Essential vitamin for bone health',
-              completed: false,
-              createdAt: new Date().toISOString()
-            };
-            setMedications([d]);
-            await saveMedications([d]);
-          } else {
-            setMedications(res.medications);
-          }
-        } else {
-          throw new Error(res.error);
-        }
+        const meds = await api.load();
+        setMedications(meds);
       } catch (e) {
-        setError('Load error: ' + e.message);
+        setError(e.message);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  // add new
-  const handleAdd = async () => {
-    if (!formData.name || !formData.time) {
-      setError('Name & Time required'); return;
-    }
-    const newMed = {
-      ...formData,
-      id: Date.now(),
-      completed: false,
-      createdAt: new Date().toISOString()
-    };
+  /* ------------------------ helpers ------------------------------ */
+  const saveAll = async newList => {
     try {
       setSaving(true);
-      const added = await mockBlobStorage.addMedicationToBlob(newMed);
-      if (!added.success) throw new Error('Add failed');
-
-      const updated = [...medications, added.medication];
-      setMedications(updated);
-      await saveMedications(updated);
-
-      setShowForm(false);
-      setFormData({
-        name:'',time:'',dosage:'',
-        frequency:'Once daily',
-        notes:'',description:''
-      });
+      await api.saveAll(newList);
+      setMedications(newList);
+      setLastSaved(new Date());
     } catch (e) {
       setError(e.message);
     } finally {
@@ -227,25 +201,38 @@ const MedicationManager = () => {
     }
   };
 
-  // toggle / delete both call saveMedications
-  const handleToggle = id => {
-    const updated = medications.map(m =>
-      m.id===id?{...m,completed:!m.completed}:m
-    );
-    setMedications(updated);
-    saveMedications(updated);
-  };
-  const handleDelete = id => {
-    const updated = medications.filter(m => m.id!==id);
-    setMedications(updated);
-    saveMedications(updated);
+  const handleAdd = async () => {
+    if (!formData.name || !formData.time) {
+      setError('Name & Time required'); return;
+    }
+    const newMed = { ...formData, id: Date.now(), completed: false, createdAt: new Date().toISOString() };
+    await saveAll([...medications, newMed]);
+    setShowForm(false);
+    setFormData({
+      name:'', time:'', dosage:'', frequency:'Once daily', notes:'', description:''
+    });
   };
 
-  // derived
-  const completedCount = medications.filter(m=>m.completed).length;
+  const handleToggle = async id => {
+    const updated = medications.map(m => m.id === id ? { ...m, completed: !m.completed } : m);
+    setMedications(updated);   // optimistic
+    try   { await api.patchOne(id, { completed: updated.find(m => m.id === id).completed }); }
+    catch (e) { setError(e.message); }
+  };
+
+  const handleDelete = async id => {
+    const updated = medications.filter(m => m.id !== id);
+    setMedications(updated);   // optimistic
+    try   { await api.deleteOne(id); }
+    catch (e) { setError(e.message); setMedications(medications); }
+  };
+
+  /* ------------------------ derived ------------------------------ */
+  const completedCount = medications.filter(m => m.completed).length;
   const totalCount     = medications.length;
   const progressPct    = totalCount ? Math.round((completedCount/totalCount)*100) : 0;
 
+  /* ------------------------ render ------------------------------- */
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
