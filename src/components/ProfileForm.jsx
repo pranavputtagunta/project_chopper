@@ -35,8 +35,7 @@ const ProfileForm = ({ formData, handleInputChange }) => {
    setUploadedFile({name: file.name, url: data.url});
 
   // data.url is the public URL of the uploaded file
-   alert('File uploaded successfully: ' + data.url);
-
+   alert('File uploaded successfully!');
 
   } catch (err){
     alert('An unexpected error occured: ' + err.message);

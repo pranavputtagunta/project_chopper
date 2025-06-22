@@ -8,11 +8,10 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "setup": "npm install && pip install -r requirements.txt && npm install -D tailwindcss postcss autoprefixer && npm install @vercel/blob && npm i -g vercel"
+    "setup": "npm install && pip install -r requirements.txt && npm install -D tailwindcss postcss autoprefixer && npm install @vercel/blob && npm i -g vercel && npm install formidable"
   },
   "dependencies": {
     "@vercel/blob": "^1.1.1",
-    "formidable": "^3.5.4",
     "lucide-react": "^0.522.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

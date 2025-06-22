@@ -1,95 +1,561 @@
-import React from 'react';
-import { Activity, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Pill, Plus, Clock, Check, X, ChevronDown, Save, Loader, AlertCircle, Database, TrendingUp } from 'lucide-react';
 
-const MedicationProgress = ({ medications }) => {
-  const completedCount = medications.filter(med => med.completed).length;
-  const totalCount = medications.length;
-  const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+// Mock blob storage functions for demo (replace with actual imports)
+const mockBlobStorage = {
+  saveMedicationsToBlob: async (medications) => {
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+    console.log('Saving medications to blob:', medications);
+    return { success: true, url: 'https://example.com/blob/medications.json' };
+  },
+  loadMedicationsFromBlob: async () => {
+    await new Promise(resolve => setTimeout(resolve, 800));
+    console.log('Loading medications from blob');
+    return { 
+      success: true, 
+      medications: [
+        {
+          id: 1,
+          name: "Vitamin D3",
+          time: "08:00",
+          dosage: "1000 IU",
+          frequency: "Once daily",
+          notes: "Take with breakfast",
+          description: "Essential vitamin for bone health and immune function",
+          completed: false,
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 2,
+          name: "Omega-3",
+          time: "19:00",
+          dosage: "2 capsules",
+          frequency: "Once daily",
+          notes: "Take with dinner",
+          description: "Fish oil supplement for heart and brain health",
+          completed: true,
+          createdAt: new Date().toISOString()
+        }
+      ]
+    };
+  },
+  addMedicationToBlob: async (medication) => {
+    await new Promise(resolve => setTimeout(resolve, 600));
+    console.log('Adding medication to blob:', medication);
+    return { success: true, medication: { ...medication, id: Date.now() } };
+  }
+};
 
-  const getProgressColor = () => {
-    if (progressPercentage >= 80) return 'from-green-400 to-green-600';
-    if (progressPercentage >= 50) return 'from-yellow-400 to-yellow-600';
-    return 'from-red-400 to-red-600';
+const MedicationTable = ({ medications, onToggle, onDelete }) => {
+  const [expandedRows, setExpandedRows] = useState(new Set());
+
+  const toggleRow = (id) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedRows(newExpanded);
   };
 
-  const getProgressBgColor = () => {
-    if (progressPercentage >= 80) return 'bg-gradient-to-br from-green-50 to-green-100';
-    if (progressPercentage >= 50) return 'bg-gradient-to-br from-yellow-50 to-yellow-100';
-    return 'bg-gradient-to-br from-red-50 to-red-100';
-  };
+  if (medications.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <Database className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+        <p>No medications in database</p>
+        <p className="text-sm">Add your first medication to get started</p>
+      </div>
+    );
+  }
 
   return (
-    <div className={`${getProgressBgColor()} rounded-2xl p-6 shadow-lg border border-white/50`}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-gray-800 flex items-center space-x-2">
-          <Activity className="w-5 h-5 text-pink-500" />
-          <span>Daily Progress</span>
-        </h3>
-        <div className={`w-10 h-10 bg-gradient-to-br ${getProgressColor()} rounded-xl flex items-center justify-center shadow-lg`}>
-          {progressPercentage === 100 ? (
-            <CheckCircle className="w-5 h-5 text-white" />
-          ) : progressPercentage > 0 ? (
-            <Clock className="w-5 h-5 text-white" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-white" />
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-gradient-to-r from-pink-50 to-rose-50 border-b border-pink-200">
+            <th className="text-left p-4 font-semibold text-gray-700">Status</th>
+            <th className="text-left p-4 font-semibold text-gray-700">Medication</th>
+            <th className="text-left p-4 font-semibold text-gray-700">Time</th>
+            <th className="text-left p-4 font-semibold text-gray-700">Dosage</th>
+            <th className="text-left p-4 font-semibold text-gray-700">Frequency</th>
+            <th className="text-left p-4 font-semibold text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {medications.map((medication) => (
+            <React.Fragment key={medication.id}>
+              <tr className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                medication.completed ? 'opacity-75' : ''
+              }`}>
+                <td className="p-4">
+                  <button
+                    onClick={() => onToggle(medication.id)}
+                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                      medication.completed
+                        ? 'bg-green-500 border-green-500'
+                        : 'border-pink-300 hover:border-pink-500'
+                    }`}
+                  >
+                    {medication.completed && (
+                      <Check className="w-4 h-4 text-white" />
+                    )}
+                  </button>
+                </td>
+                <td className="p-4">
+                  <div className={`font-medium ${
+                    medication.completed ? 'text-green-800 line-through' : 'text-gray-800'
+                  }`}>
+                    {medication.name}
+                  </div>
+                </td>
+                <td className="p-4">
+                  <div className="flex items-center space-x-1">
+                    <Clock className="w-3 h-3 text-gray-500" />
+                    <span className="text-sm text-gray-600">{medication.time}</span>
+                  </div>
+                </td>
+                <td className="p-4 text-sm text-gray-600">{medication.dosage || 'N/A'}</td>
+                <td className="p-4 text-sm text-gray-600">{medication.frequency}</td>
+                <td className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => toggleRow(medication.id)}
+                      className="p-1 hover:bg-pink-100 rounded-full transition-all"
+                      title="View details"
+                    >
+                      <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${
+                        expandedRows.has(medication.id) ? 'rotate-180' : ''
+                      }`} />
+                    </button>
+                    <button
+                      onClick={() => onDelete(medication.id)}
+                      className="p-1 hover:bg-red-100 rounded-full transition-all"
+                      title="Delete medication"
+                    >
+                      <X className="w-4 h-4 text-red-500" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {expandedRows.has(medication.id) && (
+                <tr>
+                  <td colSpan="6" className="p-0">
+                    <div className="bg-gray-50 p-4 border-l-4 border-pink-300">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {medication.notes && (
+                          <div>
+                            <span className="font-medium text-gray-700">Notes:</span>
+                            <p className="mt-1 text-gray-600">{medication.notes}</p>
+                          </div>
+                        )}
+                        {medication.description && (
+                          <div>
+                            <span className="font-medium text-gray-700">Description:</span>
+                            <p className="mt-1 text-gray-600">{medication.description}</p>
+                          </div>
+                        )}
+                        {medication.createdAt && (
+                          <div>
+                            <span className="font-medium text-gray-700">Added:</span>
+                            <p className="mt-1 text-gray-600">
+                              {new Date(medication.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const App = () => {
+  const [medications, setMedications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    time: '',
+    dosage: '',
+    frequency: 'Once daily',
+    notes: '',
+    description: ''
+  });
+
+  const frequencies = ['Once daily', 'Twice daily', 'Three times daily', 'As needed', 'Weekly'];
+
+  // Calculate progress statistics
+  const completedCount = medications.filter(med => med.completed).length;
+  const totalCount = medications.length;
+  const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  // Load medications on component mount
+  useEffect(() => {
+    loadMedications();
+  }, []);
+
+  const loadMedications = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const result = await mockBlobStorage.loadMedicationsFromBlob();
+      
+      if (result.success) {
+        setMedications(result.medications);
+      } else {
+        setError('Failed to load medications: ' + result.error);
+      }
+    } catch (err) {
+      setError('Error loading medications: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveMedications = async (medicationsToSave) => {
+    try {
+      setSaving(true);
+      setError(null);
+      
+      const result = await mockBlobStorage.saveMedicationsToBlob(medicationsToSave);
+      
+      if (result.success) {
+        setLastSaved(new Date());
+        return true;
+      } else {
+        setError('Failed to save medications: ' + result.error);
+        return false;
+      }
+    } catch (err) {
+      setError('Error saving medications: ' + err.message);
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddMedication = async () => {
+    if (!formData.name || !formData.time) {
+      setError('Please fill in required fields (Name and Time)');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const newMedication = {
+        id: Date.now(),
+        name: formData.name,
+        time: formData.time,
+        dosage: formData.dosage,
+        frequency: formData.frequency,
+        notes: formData.notes,
+        description: formData.description,
+        completed: false,
+        createdAt: new Date().toISOString()
+      };
+
+      // Add to blob storage
+      const result = await mockBlobStorage.addMedicationToBlob(newMedication);
+      
+      if (result.success) {
+        // Update local state
+        const updatedMedications = [...medications, result.medication];
+        setMedications(updatedMedications);
+        
+        // Save all medications to blob
+        await saveMedications(updatedMedications);
+        
+        // Reset form
+        setFormData({
+          name: '',
+          time: '',
+          dosage: '',
+          frequency: 'Once daily',
+          notes: '',
+          description: ''
+        });
+        setShowAddForm(false);
+      } else {
+        setError('Failed to add medication: ' + result.error);
+      }
+    } catch (err) {
+      setError('Error adding medication: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleMedication = async (id) => {
+    const updatedMedications = medications.map(med =>
+      med.id === id ? { ...med, completed: !med.completed } : med
+    );
+    setMedications(updatedMedications);
+    await saveMedications(updatedMedications);
+  };
+
+  const handleDeleteMedication = async (id) => {
+    if (window.confirm('Are you sure you want to delete this medication?')) {
+      const updatedMedications = medications.filter(med => med.id !== id);
+      setMedications(updatedMedications);
+      await saveMedications(updatedMedications);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      name: '',
+      time: '',
+      dosage: '',
+      frequency: 'Once daily',
+      notes: '',
+      description: ''
+    });
+    setShowAddForm(false);
+    setError(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-100 via-rose-50 to-white p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+            <Loader className="w-8 h-8 mx-auto mb-4 text-pink-500 animate-spin" />
+            <p className="text-gray-600">Loading medications...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-rose-50 to-white p-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-6 border border-pink-100">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-800 flex items-center space-x-2">
+                <Pill className="w-6 h-6 text-pink-500" />
+                <span>Medication Manager</span>
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {medications.length} medication{medications.length !== 1 ? 's' : ''} in database
+                {lastSaved && (
+                  <span className="ml-2 text-green-600">
+                    • Last saved: {lastSaved.toLocaleTimeString()}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              {saving && (
+                <div className="flex items-center space-x-2 text-blue-600">
+                  <Loader className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Saving...</span>
+                </div>
+              )}
+              <button
+                onClick={() => setShowAddForm(!showAddForm)}
+                disabled={saving}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:from-pink-600 hover:to-rose-600 transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
+              >
+                <Plus className={`w-4 h-4 transition-transform ${showAddForm ? 'rotate-45' : ''}`} />
+                <span className="text-sm font-medium">{showAddForm ? 'Cancel' : 'Add Medication'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          {totalCount > 0 && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-700">Daily Progress</span>
+                </div>
+                <span className="text-sm font-semibold text-gray-800">
+                  {completedCount} of {totalCount} completed ({progressPercentage}%)
+                </span>
+              </div>
+              <div className="relative w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-500 ease-out rounded-full ${
+                    progressPercentage === 100 
+                      ? 'bg-gradient-to-r from-green-400 to-emerald-500' 
+                      : 'bg-gradient-to-r from-blue-400 to-indigo-500'
+                  }`}
+                  style={{ width: `${progressPercentage}%` }}
+                />
+                {progressPercentage > 0 && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-full" />
+                )}
+              </div>
+              {progressPercentage === 100 && (
+                <div className="mt-2 text-center">
+                  <span className="text-sm font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                    🎉 All medications completed for today!
+                  </span>
+                </div>
+              )}
+            </div>
           )}
-        </div>
-      </div>
 
-      {/* Progress Stats */}
-      <div className="mb-4">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>Medications Taken</span>
-          <span>{completedCount} of {totalCount}</span>
-        </div>
-        
-        {/* Progress Bar */}
-        <div className="w-full bg-white rounded-full h-3 shadow-inner">
-          <div 
-            className={`h-3 bg-gradient-to-r ${getProgressColor()} rounded-full transition-all duration-500 ease-out`}
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-        </div>
-        
-        <div className="text-center mt-2">
-          <span className="text-2xl font-bold text-gray-800">
-            {Math.round(progressPercentage)}%
-          </span>
-          <p className="text-sm text-gray-600">Complete</p>
-        </div>
-      </div>
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <span className="text-red-700">{error}</span>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto p-1 hover:bg-red-100 rounded-full"
+              >
+                <X className="w-4 h-4 text-red-500" />
+              </button>
+            </div>
+          )}
 
-      {/* Status Message */}
-      <div className="text-center">
-        {progressPercentage === 100 ? (
-          <p className="text-sm text-green-700 font-medium">
-            🎉 All medications taken today!
-          </p>
-        ) : progressPercentage >= 50 ? (
-          <p className="text-sm text-yellow-700 font-medium">
-            👍 Good progress, keep it up!
-          </p>
-        ) : (
-          <p className="text-sm text-red-700 font-medium">
-            ⚠️ Don't forget your medications
-          </p>
-        )}
-      </div>
+          {/* Add Medication Form */}
+          {showAddForm && (
+            <div className="mb-6 p-6 bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl border border-pink-200">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Add New Medication</h4>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Medication Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      placeholder="Enter medication name"
+                      className="w-full px-3 py-2 border border-pink-200 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Time *
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.time}
+                      onChange={(e) => setFormData({...formData, time: e.target.value})}
+                      className="w-full px-3 py-2 border border-pink-200 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/50">
-        <div className="text-center">
-          <p className="text-lg font-bold text-gray-800">{completedCount}</p>
-          <p className="text-xs text-gray-600">Completed</p>
-        </div>
-        <div className="text-center">
-          <p className="text-lg font-bold text-gray-800">{totalCount - completedCount}</p>
-          <p className="text-xs text-gray-600">Remaining</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Dosage
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.dosage}
+                      onChange={(e) => setFormData({...formData, dosage: e.target.value})}
+                      placeholder="e.g., 10mg, 2 tablets"
+                      className="w-full px-3 py-2 border border-pink-200 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Frequency
+                    </label>
+                    <select
+                      value={formData.frequency}
+                      onChange={(e) => setFormData({...formData, frequency: e.target.value})}
+                      className="w-full px-3 py-2 border border-pink-200 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                    >
+                      {frequencies.map(freq => (
+                        <option key={freq} value={freq}>{freq}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="What is this medication for? (stored in blob)"
+                    rows={2}
+                    className="w-full px-3 py-2 border border-pink-200 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes
+                  </label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                    placeholder="Additional instructions or reminders"
+                    rows={2}
+                    className="w-full px-3 py-2 border border-pink-200 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all resize-none"
+                  />
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleAddMedication}
+                    disabled={saving || !formData.name || !formData.time}
+                    className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white py-2 px-4 rounded-lg hover:from-pink-600 hover:to-rose-600 transition-all shadow-lg hover:shadow-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        <span>Adding...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        <span>Add to Database</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    disabled={saving}
+                    className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-all font-medium disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Medications Table */}
+          <MedicationTable 
+            medications={medications}
+            onToggle={handleToggleMedication}
+            onDelete={handleDeleteMedication}
+          />
         </div>
       </div>
     </div>
   );
 };
 
-export default MedicationProgress;
+export default App;
