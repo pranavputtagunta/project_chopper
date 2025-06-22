@@ -1,11 +1,11 @@
-// /api/upload.js  (Node / Serverless Function)
+// /api/upload.js
 import { put } from '@vercel/blob';
 import { IncomingForm } from 'formidable';
 import fs from 'fs/promises';
 
 export const config = {
   api: { bodyParser: false },
-  runtime: 'nodejs',                 // needed for fs & formidable
+  runtime: 'nodejs',           // ensure Node runtime for fs + formidable
 };
 
 export default async function handler(req, res) {
@@ -20,23 +20,23 @@ export default async function handler(req, res) {
       );
     });
 
-    /** grab first file regardless of shape */
-    const fileField = files.file;                         // might be File | File[]
-    const file      = Array.isArray(fileField)
-      ? fileField[0]
-      : fileField;
+    // works whether `files.file` is a File or File[]
+    const fileField = files.file;
+    const file      = Array.isArray(fileField) ? fileField[0] : fileField;
 
     if (!file || !file.filepath)
       return res.status(400).json({ error: 'No file uploaded' });
 
-    /* ---------- 2. Read & upload ------------ */
-    const buffer   = await fs.readFile(file.filepath);
-    const blobPath = `medical_history/${file.originalFilename}`;
+    /* ---------- 2. Build key & upload -------- */
+    // keep original extension so mime-type stays accurate
+    const ext        = file.originalFilename.split('.').pop();  // e.g. "pdf"
+    const blobKey    = `medical_history.${ext}`;                // no folder
+    const buffer     = await fs.readFile(file.filepath);
 
-    const blob = await put(blobPath, buffer, {
-      access:     'public',
-      overwrite:  true,                    // replace any existing file
-      // token: process.env.VERCEL_BLOB_READ_WRITE_TOKEN, // optional if set globally
+    const blob = await put(blobKey, buffer, {
+      access:    'public',
+      overwrite: true,                    // always replace previous file
+      // token: process.env.VERCEL_BLOB_READ_WRITE_TOKEN (if not env-scoped)
     });
 
     /* ---------- 3. Cleanup & respond -------- */
