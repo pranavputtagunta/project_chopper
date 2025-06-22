@@ -8,7 +8,7 @@ export const config = {
 
 export default async function handler(req, res){
     if(req.method !== 'POST'){
-        return res.status(405).end('Method Not Allowed;)')
+        return res.status(405).end('Method Not Allowed')
     }
 
     const { blob } = await put(req, {access: 'public'});

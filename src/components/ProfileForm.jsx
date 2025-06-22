@@ -17,16 +17,31 @@ const ProfileForm = ({ formData, handleInputChange }) => {
    const formData = new FormData();
    formData.append('file', file);
 
-   const res = await fetch('/api/upload', {
-    method: 'POST',
-    body: formData
+   try{
+
+      const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
    });
 
-   const data = await res.json();
+   if(!res.ok){
+    const text = await res.text();
+    alert('Upload failed: ' + text);
+    return;
+   }
 
-   // data.url is the public URL of the uploaded file
+
+   const data = await res.json();
+   setUploadedFile({name: file.name, url: data.url});
+
+  // data.url is the public URL of the uploaded file
    alert('File uploaded successfully: ' + data.url);
-  };
+
+
+  } catch (err){
+    alert('An unexpected error occured: ' + err.message);
+  }
+};
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 border border-pink-100">
