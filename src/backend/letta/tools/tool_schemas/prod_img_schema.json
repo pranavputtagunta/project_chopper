@@ -1,0 +1,16 @@
+{
+  "name": "prod_img",
+  "description": "This is a simple function that returns a string.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "filepath": {
+        "type": "string",
+        "description": "Filepath to image"
+      }
+    },
+    "required": [
+      "filepath"
+    ]
+  }
+}

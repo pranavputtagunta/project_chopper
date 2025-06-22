@@ -1,0 +1,31 @@
+{
+  "name": "fda_drugsfda_search",
+  "description": "",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "brand_name": {
+        "type": "string",
+        "description": "Brand name for drug we are searching for"
+      },
+      "generic_name": {
+        "type": "string",
+        "description": "Generic name for drug we are searching for"
+      },
+      "product_ndc": {
+        "type": "string",
+        "description": "Product code for drug we are searching for"
+      },
+      "ingredients": {
+        "type": "any",
+        "description": "List of ingredients"
+      }
+    },
+    "required": [
+      "brand_name",
+      "generic_name",
+      "product_ndc",
+      "ingredients"
+    ]
+  }
+}

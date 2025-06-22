@@ -1,0 +1,31 @@
+{
+  "name": "send_message_to_doctor",
+  "description": "",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "<please add a description>"
+      },
+      "email": {
+        "type": "string",
+        "description": "<please add a description>"
+      },
+      "message": {
+        "type": "string",
+        "description": "<please add a description>"
+      },
+      "question": {
+        "type": "boolean",
+        "description": "<please add a description>"
+      }
+    },
+    "required": [
+      "name",
+      "email",
+      "message",
+      "question"
+    ]
+  }
+}
