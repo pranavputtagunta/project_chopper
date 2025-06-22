@@ -1,7 +1,21 @@
-import React from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import { Camera, User, Stethoscope, Upload } from 'lucide-react';
 
 const ProfileForm = ({ formData, handleInputChange }) => {
+
+  const fileInputRef = useRef(null)
+  const [uploadedFile, setUploadedFile] = useState(null);
+
+  const uploadHandler = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = (event) => {
+    if(event.target.files && event.target.files[0]){
+      setUploadedFile(event.target.files[0]);
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 border border-pink-100">
       {/* Profile Photo Section */}
@@ -73,10 +87,26 @@ const ProfileForm = ({ formData, handleInputChange }) => {
           />
         </div>
 
-        <button className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 px-6 rounded-xl font-medium hover:from-pink-600 hover:to-rose-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+      {/* Upload medical documents */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        onChange={handleFileChange}
+        />
+        <button 
+        className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 px-6 rounded-xl font-medium hover:from-pink-600 hover:to-rose-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+        type="button"
+        onClick={uploadHandler}
+        >
           <Upload className="w-5 h-5" />
           <span>Upload Medical Documents</span>
         </button>
+        {uploadedFile && (
+          <div className="mt-2 text-sm text-green-600">
+            Uploaded: {uploadedFile.name}
+          </div>
+        )}
       </div>
     </div>
   );
