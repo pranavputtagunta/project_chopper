@@ -1,5 +1,8 @@
 // src/components/MedicationManager.jsx
 import React, { useState, useEffect } from 'react';
+import NotificationPopup from './NotificationPopup';  
+import dayjs from 'dayjs';
+
 import {
   Pill, Plus, Clock, Check, X, ChevronDown,
   Save, Loader, AlertCircle, Database, TrendingUp
@@ -56,6 +59,8 @@ const api = {
 /* ------------------------------------------------------------------ */
 const MedicationTable = React.memo(({ medications, onToggle, onDelete }) => {
   const [expanded, setExpanded] = useState(new Set());
+
+
   const toggleRow = id => {
     const s = new Set(expanded);
     s.has(id) ? s.delete(id) : s.add(id);
@@ -160,11 +165,20 @@ const MedicationTable = React.memo(({ medications, onToggle, onDelete }) => {
 /* ------------------------------------------------------------------ */
 const MedicationManager = () => {
   const [medications, setMedications] = useState([]);
+  const [missed, setMissed] = useState(null); // stores the first missed medication
   const [loading,     setLoading]     = useState(true);
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState(null);
   const [showForm,    setShowForm]    = useState(false);
   const [lastSaved,   setLastSaved]   = useState(null);
+
+  useEffect(() => {
+    const now = dayjs();
+    const overdue = medications.find(
+      m => !m.completed && dayjs(`${now.format('YYYY-MM-DD')} ${m.time}`).isBefore(now)
+    );
+    if (overdue) setMissed (overdue);
+  }, [medications]);
 
   const [formData, setFormData] = useState({
     name: '', time: '', dosage: '',
@@ -388,6 +402,7 @@ const MedicationManager = () => {
                 Cancel
               </button>
             </div>
+
           </div>
         )}
 
@@ -397,6 +412,17 @@ const MedicationManager = () => {
           onToggle={handleToggle}
           onDelete={handleDelete}
         />
+
+        {missed && (
+              <NotificationPopup
+                medication = {missed}
+                onAnswer={answer => {
+                  // TODO: check the user's answer and then YES or NO, redirect to chat
+                  console.log('user clikced', answer);
+                  setMissed(null);
+                }}
+                />
+            )}
       </div>
     </div>
   );
