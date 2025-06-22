@@ -38,37 +38,45 @@ const HomeScreen = () => {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-8">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-gray-800 mb-2">Health Dashboard</h1>
             <p className="text-gray-600">Track your wellness journey</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-[400px_1fr] gap-8">
             {/* Left Column - Profile Form */}
-            <div className="lg:col-span-1">
+            <div>
               <ProfileForm 
                 formData={formData}
                 handleInputChange={handleInputChange}
               />
             </div>
 
-            {/* Right Columns - Main Dashboard */}
-            <div className="lg:col-span-2 space-y-6">
+            {/* Right Column */}
+            <div className="space-y-8">
               {/* Health Metrics Cards */}
               <DashboardCards />
 
-              {/* Calendar and Medication Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <AppointmentCalendar />
-                
-                <div className="space-y-6">
-                  <MedicationProgress medications={medications} />
-                  <MedicationSchedule 
-                    medications={medications}
-                    toggleMedication={toggleMedication}
-                  />
+              {/* Calendar and Medication Section as flex */}
+              <div className="flex flex-wrap gap-8">
+                {/* Wider calendar container */}
+                <div className="flex-[1_1_360px] bg-white rounded-2xl shadow p-6">
+                  <AppointmentCalendar />
+                </div>
+
+                {/* Medication Section */}
+                <div className="flex-[1_1_360px] space-y-6">
+                  <div className="bg-white rounded-2xl shadow p-6">
+                    <MedicationProgress medications={medications} />
+                  </div>
+                  <div className="bg-white rounded-2xl shadow p-6">
+                    <MedicationSchedule 
+                      medications={medications}
+                      toggleMedication={toggleMedication}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
