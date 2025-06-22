@@ -11,6 +11,11 @@ export default async function handler(req, res){
         return res.status(405).end('Method Not Allowed')
     }
 
-    const { blob } = await put(req, {access: 'public'});
+  try {
+    // The Vercel Blob SDK's `put` can accept the entire req object for multipart/form-data
+    const { blob } = await put(req, { access: 'public' });
     return res.status(200).json(blob);
+  } catch (error) {
+    res.status(500).send('A server error occurred: ' + error.message);
+  }
 }
