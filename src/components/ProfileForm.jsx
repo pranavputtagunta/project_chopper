@@ -10,10 +10,22 @@ const ProfileForm = ({ formData, handleInputChange }) => {
     fileInputRef.current.click();
   };
 
-  const handleFileChange = (event) => {
-    if(event.target.files && event.target.files[0]){
-      setUploadedFile(event.target.files[0]);
-    }
+  const handleFileChange = async (event) => {
+   const file = event.target.files[0];
+   if(!file) return;
+
+   const formData = new FormData();
+   formData.append('file', file);
+
+   const res = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData
+   });
+
+   const data = await res.json();
+
+   // data.url is the public URL of the uploaded file
+   alert('File uploaded successfully: ' + data.url);
   };
 
   return (
