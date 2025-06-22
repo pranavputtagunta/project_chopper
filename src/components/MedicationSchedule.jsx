@@ -1,45 +1,46 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Pill, Plus, Clock, Check, X, ChevronDown, Save, Loader, AlertCircle, Database, TrendingUp } from 'lucide-react';
 
-// Mock blob storage functions for demo (replace with actual imports)
-const mockBlobStorage = {
-  saveMedicationsToBlob: async (medications) => {
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-    console.log('Saving medications to blob:', medications);
-    return { success: true, url: 'https://example.com/blob/medications.json' };
-  },
-  loadMedicationsFromBlob: async () => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    console.log('Loading medications from blob');
-    return { 
-      success: true, 
-      medications: [
-        {
-          id: 1,
-          name: "Vitamin D3",
-          time: "08:00",
-          dosage: "1000 IU",
-          frequency: "Once daily",
-          notes: "Take with breakfast",
-          description: "Essential vitamin for bone health and immune function",
-          completed: false,
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 2,
-          name: "Omega-3",
-          time: "19:00",
-          dosage: "2 capsules",
-          frequency: "Once daily",
-          notes: "Take with dinner",
-          description: "Fish oil supplement for heart and brain health",
-          completed: true,
-          createdAt: new Date().toISOString()
-        }
-      ]
-    };
-  }
-};
+// // Mock blob storage functions for demo (replace with actual imports) = test func
+// const mockBlobStorage = {
+//   saveMedicationsToBlob: async (medications) => {
+//     await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+//     console.log('Saving medications to blob:', medications);
+//     return { success: true, url: 'https://example.com/blob/medications.json' };
+//   },
+//   loadMedicationsFromBlob: async () => {
+//     await new Promise(resolve => setTimeout(resolve, 800));
+//     console.log('Loading medications from blob');
+//     return { 
+//       success: true, 
+//       medications: [
+//         {
+//           id: 1,
+//           name: "Vitamin D3",
+//           time: "08:00",
+//           dosage: "1000 IU",
+//           frequency: "Once daily",
+//           notes: "Take with breakfast",
+//           description: "Essential vitamin for bone health and immune function",
+//           completed: false,
+//           createdAt: new Date().toISOString()
+//         },
+//         {
+//           id: 2,
+//           name: "Omega-3",
+//           time: "19:00",
+//           dosage: "2 capsules",
+//           frequency: "Once daily",
+//           notes: "Take with dinner",
+//           description: "Fish oil supplement for heart and brain health",
+//           completed: true,
+//           createdAt: new Date().toISOString()
+//         }
+//       ]
+//     };
+//   }
+// };
+
 
 const MedicationTable = React.memo(({ medications, onToggle, onDelete }) => {
   const [expandedRows, setExpandedRows] = useState(new Set());
@@ -224,25 +225,19 @@ const MedicationManager = () => {
   };
 
   const saveMedications = async (medicationsToSave) => {
-    try {
-      setSaving(true);
-      setError(null);
-      
-      const result = await mockBlobStorage.saveMedicationsToBlob(medicationsToSave);
-      
-      if (result.success) {
-        setLastSaved(new Date());
-        return true;
-      } else {
-        setError('Failed to save medications: ' + result.error);
-        return false;
-      }
-    } catch (err) {
-      setError('Error saving medications: ' + err.message);
-      return false;
-    } finally {
-      setSaving(false);
-    }
+  try {
+    const res = await fetch('/api/medications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ medications: medicationsToSave }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to save');
+    return true;
+  } catch (err) {
+    setError('Error saving medications: ' + err.message);
+    return false;
+  }
   };
 
   const handleAddMedication = async () => {

@@ -250,3 +250,23 @@ export const testBlobOperations = async () => {
   
   return { addResult, loadResult, infoResult };
 };
+
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    // Save all medications (bulk update)
+    const { medications } = req.body;
+    const result = await saveMedicationsToBlob(medications);
+    res.status(200).json(result);
+  } else if (req.method === 'PATCH') {
+    // Update a single medication
+    const { id, updates } = req.body;
+    const result = await updateMedicationInBlob(id, updates);
+    res.status(200).json(result);
+  } else if (req.method === 'GET') {
+    // Load all medications
+    const result = await loadMedicationsFromBlob();
+    res.status(200).json(result);
+  } else {
+    res.status(405).end('Method Not Allowed');
+  }
+}

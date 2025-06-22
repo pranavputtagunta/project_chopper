@@ -299,21 +299,29 @@ const App = () => {
     }
   };
 
-  const handleToggleMedication = async (id) => {
-    const updatedMedications = medications.map(med =>
-      med.id === id ? { ...med, completed: !med.completed } : med
-    );
-    setMedications(updatedMedications);
-    await saveMedications(updatedMedications);
-  };
+const handleToggleMedication = async (id) => {
+  // Optimistically update UI
+  const updatedMedications = medications.map(med =>
+    med.id === id ? { ...med, completed: !med.completed } : med
+  );
+  setMedications(updatedMedications);
 
-  const handleDeleteMedication = async (id) => {
-    if (window.confirm('Are you sure you want to delete this medication?')) {
-      const updatedMedications = medications.filter(med => med.id !== id);
-      setMedications(updatedMedications);
-      await saveMedications(updatedMedications);
-    }
-  };
+  // Send PATCH request to update only the toggled medication
+  try {
+    const toggledMed = updatedMedications.find(med => med.id === id);
+    const res = await fetch('/api/medications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, updates: { completed: toggledMed.completed } }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to update medication');
+  } catch (err) {
+    // Optionally revert UI or show error
+    setError('Error updating medication: ' + err.message);
+    // Optionally reload medications from DB here
+  }
+};
 
   const handleCancel = () => {
     setFormData({
